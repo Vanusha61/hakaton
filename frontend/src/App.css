@@ -689,12 +689,122 @@ body {
   transform: translateY(-1px);
 }
 
+/* ── HERO COURSE PROGRESS ── */
+.hero-course-progress {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 40px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.hcp-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.hcp-bar-wrap {
+  flex: 1;
+  height: 6px;
+  background: rgba(107, 143, 255, 0.12);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.hcp-bar {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--gradient-main);
+  transition: width 1s ease;
+}
+
+.hcp-val {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent-blue);
+  flex-shrink: 0;
+  min-width: 36px;
+  text-align: right;
+}
+
+/* ── QUARTERS GRID ── */
+.quarters-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.quarter-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.quarter-card:hover {
+  border-color: rgba(107, 143, 255, 0.35);
+  transform: translateY(-3px);
+}
+
+.quarter-model-wrap {
+  background: linear-gradient(160deg, #0d1025, #12102a);
+  width: 100%;
+}
+
+.quarter-info {
+  padding: 16px 20px 20px;
+}
+
+.quarter-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+}
+
+.quarter-progress-bar-wrap {
+  height: 6px;
+  background: rgba(107, 143, 255, 0.12);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.quarter-progress-bar {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--gradient-main);
+  transition: width 1.2s ease;
+}
+
+.quarter-pct {
+  font-size: 22px;
+  font-weight: 800;
+  background: var(--gradient-main);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+}
+
+.quarter-loading {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
 /* ── RESPONSIVE ── */
 @media (max-width: 640px) {
   .metrics-grid,
   .metrics-grid.cols-3,
   .charts-row,
-  .insights-grid {
+  .insights-grid,
+  .quarters-grid {
     grid-template-columns: 1fr;
   }
 

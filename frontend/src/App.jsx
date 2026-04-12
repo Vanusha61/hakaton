@@ -1,7 +1,11 @@
+import { useState, useEffect, useRef } from 'react'
+import html2canvas from 'html2canvas'
+import ModelViewer from './components/ModelViewer'
+import { fetchQuarterProgress, fetchCourseProgress } from './api'
 import './App.css'
 
-// ── MOCK DATA (заменится на API /report/{user_id}) ──────────────────────────
-const data = {
+// ── MOCK DATA (статика — заменится на API /report/{user_id}) ─────────────────
+const MOCK = {
   student: { name: 'Иван Петров', course: 'Английский язык · 2024–2025' },
 
   hero: {
@@ -12,10 +16,10 @@ const data = {
   },
 
   funnel: [
-    { label: 'Открыто уроков', value: 48, pct: 100, cls: 'b1' },
-    { label: 'Видео открыто', value: 41, pct: 85, cls: 'b2' },
-    { label: 'Видео досмотрено', value: 35, pct: 73, cls: 'b3' },
-    { label: 'Задачи решены', value: 37, pct: 77, cls: 'b4' },
+    { label: 'Открыто уроков',   value: 48, pct: 100, cls: 'b1' },
+    { label: 'Видео открыто',    value: 41, pct: 85,  cls: 'b2' },
+    { label: 'Видео досмотрено', value: 35, pct: 73,  cls: 'b3' },
+    { label: 'Задачи решены',    value: 37, pct: 77,  cls: 'b4' },
   ],
 
   activity: {
@@ -59,25 +63,79 @@ const data = {
 
   achievements: [
     { icon: '🏆', title: 'Топ-вовлечённость', desc: '85% уроков с просмотром видео' },
-    { icon: '🔥', title: '94 активных дня', desc: 'Регулярность на протяжении года' },
-    { icon: '💡', title: '4 208 баллов', desc: 'Общий результат за курс' },
-    { icon: '🎯', title: 'Средний балл 84', desc: 'Стабильно высокое качество' },
+    { icon: '🔥', title: '94 активных дня',   desc: 'Регулярность на протяжении года' },
+    { icon: '💡', title: '4 208 баллов',       desc: 'Общий результат за курс' },
+    { icon: '🎯', title: 'Средний балл 84',    desc: 'Стабильно высокое качество' },
   ],
 
   shareCard: {
     phrase: 'Год обучения — это не просто цифры. Это 94 дня роста.',
     stats: [
-      { val: '84', lbl: 'Средний балл' },
-      { val: '312', lbl: 'Задач решено' },
-      { val: '94', lbl: 'Активных дней' },
+      { val: '84',    lbl: 'Средний балл' },
+      { val: '312',   lbl: 'Задач решено' },
+      { val: '94',    lbl: 'Активных дней' },
       { val: '4 208', lbl: 'Баллов' },
     ],
   },
 }
+
+const QUARTERS = [
+  { label: '1 четверть', model: '/models/stage1.glb' },
+  { label: '2 четверть', model: '/models/stage2.glb' },
+  { label: '3 четверть', model: '/models/stage3.glb' },
+  { label: '4 четверть', model: '/models/stage4.glb' },
+]
 // ────────────────────────────────────────────────────────────────────────────
 
 export default function App() {
-  const { student, hero, funnel, activity, insights, achievements, shareCard } = data
+  const { student, hero, funnel, activity, insights, achievements, shareCard } = MOCK
+
+  // ── API state ──────────────────────────────────────────────────────────────
+  const [quarterProgress, setQuarterProgress] = useState([null, null, null, null])
+  const [courseProgress, setCourseProgress]   = useState(null)
+
+  useEffect(() => {
+    // Загружаем прогресс по всем четвертям параллельно
+    Promise.allSettled([
+      fetchQuarterProgress(1),
+      fetchQuarterProgress(2),
+      fetchQuarterProgress(3),
+      fetchQuarterProgress(4),
+    ]).then((results) => {
+      setQuarterProgress(
+        results.map((r) => (r.status === 'fulfilled' ? r.value.progress : null))
+      )
+    })
+
+    fetchCourseProgress()
+      .then((data) => setCourseProgress(data.progress))
+      .catch(() => {})
+  }, [])
+
+  // ── Share ──────────────────────────────────────────────────────────────────
+  const shareCardRef = useRef(null)
+  const [copied, setCopied] = useState(false)
+
+  function handleCopyLink() {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  async function handleDownload() {
+    if (!shareCardRef.current) return
+    const canvas = await html2canvas(shareCardRef.current, {
+      backgroundColor: '#0d1230',
+      scale: 2,
+      useCORS: true,
+    })
+    const link = document.createElement('a')
+    link.download = 'мой-учебный-год.png'
+    link.href = canvas.toDataURL('image/png')
+    link.click()
+  }
+  // ──────────────────────────────────────────────────────────────────────────
 
   return (
     <div className="report">
@@ -107,7 +165,55 @@ export default function App() {
             <div className="lbl">Баллов набрано</div>
           </div>
         </div>
+        {courseProgress !== null && (
+          <div className="hero-course-progress">
+            <div className="hcp-label">Прогресс по курсу</div>
+            <div className="hcp-bar-wrap">
+              <div className="hcp-bar" style={{ width: `${courseProgress}%` }} />
+            </div>
+            <div className="hcp-val">{courseProgress}%</div>
+          </div>
+        )}
         <div className="hero-scroll">Листай вниз</div>
+      </section>
+
+      <div className="divider" />
+
+      {/* ── 3D: ПУТЬ ПО ЧЕТВЕРТЯМ ────────────────────────────────── */}
+      <section className="chapter">
+        <div className="chapter-label">Твой путь</div>
+        <h2 className="chapter-heading">
+          Четыре <span className="highlight">этапа</span> учебного года
+        </h2>
+        <p className="chapter-desc">
+          Каждая четверть — отдельный этап. Крути модель мышью, смотри как ты рос.
+        </p>
+
+        <div className="quarters-grid">
+          {QUARTERS.map((q, i) => {
+            const pct = quarterProgress[i]
+            return (
+              <div key={q.label} className="quarter-card">
+                <div className="quarter-model-wrap">
+                  <ModelViewer url={q.model} />
+                </div>
+                <div className="quarter-info">
+                  <div className="quarter-label">{q.label}</div>
+                  {pct !== null ? (
+                    <>
+                      <div className="quarter-progress-bar-wrap">
+                        <div className="quarter-progress-bar" style={{ width: `${pct}%` }} />
+                      </div>
+                      <div className="quarter-pct">{pct}%</div>
+                    </>
+                  ) : (
+                    <div className="quarter-loading">загрузка…</div>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
       </section>
 
       <div className="divider" />
@@ -320,7 +426,7 @@ export default function App() {
           Карточка с твоими главными достижениями — готова к публикации.
         </p>
 
-        <div className="share-card">
+        <div className="share-card" ref={shareCardRef}>
           <div className="share-card-glow" />
           <div className="share-card-content">
             <div className="share-logo">Цифриум</div>
@@ -334,13 +440,23 @@ export default function App() {
                   <div className="share-num-lbl">{s.lbl}</div>
                 </div>
               ))}
+              {courseProgress !== null && (
+                <div className="share-num-item">
+                  <div className="share-num-val">{courseProgress}%</div>
+                  <div className="share-num-lbl">Курс пройден</div>
+                </div>
+              )}
             </div>
 
             <div className="share-phrase">{shareCard.phrase}</div>
 
             <div className="share-actions">
-              <button className="btn-primary">Скачать карточку</button>
-              <button className="btn-outline">Скопировать ссылку</button>
+              <button className="btn-primary" onClick={handleDownload}>
+                Скачать карточку
+              </button>
+              <button className="btn-outline" onClick={handleCopyLink}>
+                {copied ? 'Скопировано!' : 'Скопировать ссылку'}
+              </button>
             </div>
           </div>
         </div>
