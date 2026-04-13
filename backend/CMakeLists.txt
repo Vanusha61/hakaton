@@ -15,6 +15,7 @@ message(STATUS "use c++20")
 
 aux_source_directory(controllers CTL_SRC)
 aux_source_directory(controllers/Conspects CTL_CONSPECTS_SRC)
+aux_source_directory(controllers/Media CTL_MEDIA_SRC)
 aux_source_directory(controllers/Points CTL_POINTS_SRC)
 aux_source_directory(controllers/Progress CTL_PROGRESS_SRC)
 aux_source_directory(controllers/Videos CTL_VIDEOS_SRC)
@@ -31,6 +32,7 @@ target_sources(${PROJECT_NAME}
                PRIVATE
                ${CTL_SRC}
                ${CTL_CONSPECTS_SRC}
+               ${CTL_MEDIA_SRC}
                ${CTL_POINTS_SRC}
                ${CTL_PROGRESS_SRC}
                ${CTL_VIDEOS_SRC}
