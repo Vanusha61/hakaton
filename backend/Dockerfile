@@ -49,7 +49,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=drogon-builder /usr/local /usr/local
 
 WORKDIR /app
-COPY CMakeLists.txt main.cpp ./
+COPY CMakeLists.txt config.docker.json main.cc ./
+COPY controllers ./controllers
+COPY services ./services
+COPY constants ./constants
 RUN cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
     && cmake --build build
 
