@@ -40,6 +40,7 @@ class CourseMetricsService
         std::optional<int> lessonNumber;
         double maxPoints{0.0};
         int maxTaskCount{0};
+        bool taskExpected{false};
         bool hasVideo{false};
         bool hasPreparationMaterial{false};
     };
@@ -49,6 +50,7 @@ class CourseMetricsService
         int lessonId{0};
         double earnedPoints{0.0};
         int solvedTasks{0};
+        bool solved{false};
         bool videoWatched{false};
         bool translationVisited{false};
     };

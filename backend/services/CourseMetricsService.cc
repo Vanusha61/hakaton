@@ -126,6 +126,7 @@ std::optional<std::vector<CourseMetricsService::CourseLesson>> CourseMetricsServ
         const auto result = dbClient->execSqlSync(
             "select l.id, l.lesson_number, coalesce(l.wk_max_points, 0) as wk_max_points, "
             "coalesce(l.wk_task_count, 0) as wk_task_count, "
+            "coalesce(l.task_expected, false) as task_expected, "
             "coalesce(l.wk_video_duration, 0) as wk_video_duration, "
             "exists ("
             "    select 1 from public.wk_users_courses_actions a "
@@ -148,6 +149,7 @@ std::optional<std::vector<CourseMetricsService::CourseLesson>> CourseMetricsServ
             }
             lesson.maxPoints = row["wk_max_points"].as<double>();
             lesson.maxTaskCount = row["wk_task_count"].as<int>();
+            lesson.taskExpected = row["task_expected"].as<bool>();
             lesson.hasVideo = row["wk_video_duration"].as<double>() > 0.0;
             lesson.hasPreparationMaterial = row["has_preparation_material"].as<bool>();
             lessons.push_back(lesson);
@@ -173,6 +175,7 @@ std::optional<std::vector<CourseMetricsService::UserLessonState>> CourseMetricsS
         const auto result = dbClient->execSqlSync(
             "select lesson_id, coalesce(wk_points, 0) as wk_points, "
             "coalesce(wk_solved_task_count, 0) as wk_solved_task_count, "
+            "coalesce(solved, false) as solved, "
             "coalesce(video_visited, false) or coalesce(video_viewed, false) as video_watched, "
             "coalesce(translation_visited, false) as translation_visited "
             "from public.user_lessons "
@@ -188,6 +191,7 @@ std::optional<std::vector<CourseMetricsService::UserLessonState>> CourseMetricsS
                 row["lesson_id"].as<int>(),
                 row["wk_points"].as<double>(),
                 row["wk_solved_task_count"].as<int>(),
+                row["solved"].as<bool>(),
                 row["video_watched"].as<bool>(),
                 row["translation_visited"].as<bool>()});
         }
