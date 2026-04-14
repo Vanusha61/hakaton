@@ -20,6 +20,24 @@ bool isTaskLesson(const CourseMetricsService::CourseLesson &lesson)
 {
     return lesson.taskExpected || lesson.maxTaskCount > 0;
 }
+
+bool isVisitedLesson(const CourseMetricsService::UserLessonState &state)
+{
+    return state.translationVisited || state.videoWatched;
+}
+
+std::string makeExclusiveInsight(const std::string &title,
+                                 const std::string &periodPhrase,
+                                 int visitedUsersCount,
+                                 int totalUsersCount)
+{
+    return "Пока другие отдыхали, ты изучал " + title + ". Это занятие оказалось самым "
+           "эксклюзивным " +
+           periodPhrase + " — лишь " + std::to_string(visitedUsersCount) + " из " +
+           std::to_string(totalUsersCount) +
+           " учеников добрались до этой темы. Твоя жажда знаний помогает ракете "
+           "прокладывать маршруты там, где другие боятся лететь.";
+}
 }  // namespace
 
 std::optional<LessonAchievementsService::MetricsContext> LessonAchievementsService::loadContext(
@@ -382,5 +400,176 @@ std::optional<RareLessonsResult> LessonAchievementsService::computeRareLessonsYe
     }
 
     return computeRareLessons(dbClient, courseId, context->lessons, context->stateByLessonId, error);
+}
+
+std::optional<RarestVisitedLessonResult> LessonAchievementsService::computeRarestVisitedLesson(
+    const drogon::orm::DbClientPtr &dbClient,
+    int courseId,
+    const std::vector<CourseMetricsService::CourseLesson> &lessons,
+    const std::unordered_map<int, CourseMetricsService::UserLessonState> &stateByLessonId,
+    const std::string &periodPhrase,
+    ApiError &error) const
+{
+    try
+    {
+        std::vector<int> visitedLessonIds;
+        visitedLessonIds.reserve(lessons.size());
+
+        for (const auto &lesson : lessons)
+        {
+            if (!lesson.lessonNumber.has_value())
+            {
+                continue;
+            }
+
+            const auto stateIt = stateByLessonId.find(lesson.lessonId);
+            if (stateIt == stateByLessonId.end() || !isVisitedLesson(stateIt->second))
+            {
+                continue;
+            }
+
+            visitedLessonIds.push_back(lesson.lessonId);
+        }
+
+        if (visitedLessonIds.empty())
+        {
+            error = {drogon::k404NotFound,
+                     "Для пользователя не найдено посещённых уроков в выбранном периоде"};
+            return std::nullopt;
+        }
+
+        const auto totalUsersResult = dbClient->execSqlSync(
+            "select count(distinct user_id)::int as total_users "
+            "from public.user_courses "
+            "where course_id = $1",
+            courseId);
+
+        const auto totalUsers =
+            totalUsersResult.empty() ? 0 : totalUsersResult.front()["total_users"].as<int>();
+        if (totalUsers <= 0)
+        {
+            error = {drogon::k404NotFound, "Для курса не найдены пользователи"};
+            return std::nullopt;
+        }
+
+        const auto visitedUsersResult = dbClient->execSqlSync(
+            "select ul.lesson_id, "
+            "count(distinct ul.user_id)::int as visited_users "
+            "from public.user_lessons ul "
+            "join public.lessons l on l.id = ul.lesson_id and l.course_id = $1 "
+            "where coalesce(ul.translation_visited, false) = true "
+            "   or coalesce(ul.video_visited, false) = true "
+            "   or coalesce(ul.video_viewed, false) = true "
+            "group by ul.lesson_id",
+            courseId);
+
+        std::unordered_map<int, int> visitedUsersByLessonId;
+        for (const auto &row : visitedUsersResult)
+        {
+            visitedUsersByLessonId.emplace(row["lesson_id"].as<int>(), row["visited_users"].as<int>());
+        }
+
+        const auto lessonOrderKey = [&](int lessonId)
+        {
+            const auto lessonIt = std::find_if(
+                lessons.begin(),
+                lessons.end(),
+                [&](const auto &lesson) { return lesson.lessonId == lessonId; });
+
+            if (lessonIt == lessons.end())
+            {
+                return std::pair<int, int>{std::numeric_limits<int>::max(), lessonId};
+            }
+
+            const auto lessonNumber = lessonIt->lessonNumber.has_value()
+                                          ? *lessonIt->lessonNumber
+                                          : std::numeric_limits<int>::max();
+            return std::pair<int, int>{lessonNumber, lessonId};
+        };
+
+        std::sort(visitedLessonIds.begin(),
+                  visitedLessonIds.end(),
+                  [&](int lhs, int rhs)
+                  {
+                      const auto lhsVisited = visitedUsersByLessonId[lhs];
+                      const auto rhsVisited = visitedUsersByLessonId[rhs];
+                      if (lhsVisited != rhsVisited)
+                      {
+                          return lhsVisited < rhsVisited;
+                      }
+                      return lessonOrderKey(lhs) < lessonOrderKey(rhs);
+                  });
+
+        const auto winnerId = visitedLessonIds.front();
+        const auto lessonIt = std::find_if(
+            lessons.begin(),
+            lessons.end(),
+            [&](const auto &lesson) { return lesson.lessonId == winnerId; });
+        if (lessonIt == lessons.end())
+        {
+            error = {drogon::k404NotFound, "Не удалось определить урок для storytelling-блока"};
+            return std::nullopt;
+        }
+
+        const auto visitedUsersCount = visitedUsersByLessonId[winnerId];
+        const auto visitedPercentage = CourseMetricsService::roundCount(
+            (static_cast<double>(visitedUsersCount) * 100.0) / static_cast<double>(totalUsers));
+
+        return RarestVisitedLessonResult{
+            .title = makeLessonTitle(*lessonIt),
+            .visitedPercentage = visitedPercentage,
+            .visitedUsersCount = visitedUsersCount,
+            .totalUsersCount = totalUsers,
+            .reportName = "Ты посетил самый редкий урок",
+            .insight = makeExclusiveInsight(makeLessonTitle(*lessonIt),
+                                           periodPhrase,
+                                           visitedUsersCount,
+                                           totalUsers)};
+    }
+    catch (const std::exception &e)
+    {
+        error = {drogon::k500InternalServerError,
+                 "Ошибка расчёта редкости посещённого урока: " + std::string(e.what())};
+        return std::nullopt;
+    }
+}
+
+std::optional<RarestVisitedLessonResult> LessonAchievementsService::computeRarestVisitedLessonQuarter(
+    const drogon::orm::DbClientPtr &dbClient,
+    int quarter,
+    int userId,
+    int courseId,
+    ApiError &error) const
+{
+    const auto context = loadContext(dbClient, userId, courseId, error);
+    if (!context.has_value())
+    {
+        return std::nullopt;
+    }
+
+    const auto lessons = sliceLessons(context->lessons, quarter, error);
+    if (!error.reason.empty())
+    {
+        return std::nullopt;
+    }
+
+    return computeRarestVisitedLesson(
+        dbClient, courseId, lessons, context->stateByLessonId, "в этой четверти", error);
+}
+
+std::optional<RarestVisitedLessonResult> LessonAchievementsService::computeRarestVisitedLessonYear(
+    const drogon::orm::DbClientPtr &dbClient,
+    int userId,
+    int courseId,
+    ApiError &error) const
+{
+    const auto context = loadContext(dbClient, userId, courseId, error);
+    if (!context.has_value())
+    {
+        return std::nullopt;
+    }
+
+    return computeRarestVisitedLesson(
+        dbClient, courseId, context->lessons, context->stateByLessonId, "в этом году", error);
 }
 }  // namespace yearreporter::services

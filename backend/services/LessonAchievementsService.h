@@ -22,6 +22,16 @@ struct RareLessonsResult
     std::vector<RareLesson> items;
 };
 
+struct RarestVisitedLessonResult
+{
+    std::string title;
+    int visitedPercentage{0};
+    int visitedUsersCount{0};
+    int totalUsersCount{0};
+    std::string reportName;
+    std::string insight;
+};
+
 class LessonAchievementsService
 {
   public:
@@ -58,6 +68,19 @@ class LessonAchievementsService
                                                             int courseId,
                                                             ApiError &error) const;
 
+    std::optional<RarestVisitedLessonResult> computeRarestVisitedLessonQuarter(
+        const drogon::orm::DbClientPtr &dbClient,
+        int quarter,
+        int userId,
+        int courseId,
+        ApiError &error) const;
+
+    std::optional<RarestVisitedLessonResult> computeRarestVisitedLessonYear(
+        const drogon::orm::DbClientPtr &dbClient,
+        int userId,
+        int courseId,
+        ApiError &error) const;
+
   private:
     struct MetricsContext
     {
@@ -84,6 +107,14 @@ class LessonAchievementsService
         int courseId,
         const std::vector<CourseMetricsService::CourseLesson> &lessons,
         const std::unordered_map<int, CourseMetricsService::UserLessonState> &stateByLessonId,
+        ApiError &error) const;
+
+    std::optional<RarestVisitedLessonResult> computeRarestVisitedLesson(
+        const drogon::orm::DbClientPtr &dbClient,
+        int courseId,
+        const std::vector<CourseMetricsService::CourseLesson> &lessons,
+        const std::unordered_map<int, CourseMetricsService::UserLessonState> &stateByLessonId,
+        const std::string &periodPhrase,
         ApiError &error) const;
 };
 }  // namespace yearreporter::services
