@@ -839,3 +839,278 @@ body {
     font-size: 13px;
   }
 }
+
+/* ── Топ-3 сложных урока ─────────────────────────────────────────────────── */
+.rare-lessons-table {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.rare-lessons-header {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 16px;
+  padding: 14px 20px;
+  background: var(--bg-card-2);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.rare-lesson-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 16px;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.2s;
+}
+.rare-lesson-row:last-child { border-bottom: none; }
+.rare-lesson-row:hover { background: var(--bg-card-2); }
+
+.rare-lesson-title {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.rare-lesson-badge {
+  background: rgba(62, 207, 178, 0.15);
+  color: var(--accent-teal);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.rare-lesson-pct {
+  color: var(--accent-orange);
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .rare-lessons-header,
+  .rare-lesson-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+}
+
+/* ── TAB NAV ─────────────────────────────────────────────────────────────── */
+.tab-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(10, 12, 20, 0.85);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 20px;
+  margin: 0 -20px;
+}
+
+.tab-nav-inner {
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.tab-nav-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.tab-list {
+  display: flex;
+  gap: 6px;
+}
+
+.tab-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab-btn:hover {
+  border-color: rgba(107, 143, 255, 0.4);
+  color: var(--text);
+}
+
+.tab-btn.active {
+  background: var(--gradient-main);
+  border-color: transparent;
+  color: #fff;
+}
+
+/* "Год" — чуть шире */
+.tab-btn:last-child {
+  border-radius: 18px;
+  width: auto;
+  padding: 0 14px;
+}
+
+/* ── SINGLE QUARTER MODEL ────────────────────────────────────────────────── */
+.single-model-wrap {
+  background: linear-gradient(160deg, #0d1025, #12102a);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.single-model-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px 20px;
+}
+
+.single-model-pct {
+  font-size: 22px;
+  font-weight: 800;
+  background: var(--gradient-main);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  flex-shrink: 0;
+}
+
+/* ── CHRONOTYPE TABLE ────────────────────────────────────────────────────── */
+.chrono-table {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.chrono-header {
+  display: grid;
+  grid-template-columns: 140px 140px 200px 1fr;
+  gap: 12px;
+  padding: 12px 20px;
+  background: var(--bg-card-2);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+
+.chrono-row {
+  display: grid;
+  grid-template-columns: 140px 140px 200px 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.2s;
+}
+
+.chrono-row:last-child {
+  border-bottom: none;
+}
+
+.chrono-row:hover {
+  background: var(--bg-card-2);
+}
+
+.chrono-row.chrono-active {
+  background: linear-gradient(90deg, rgba(107,143,255,0.06), rgba(176,107,255,0.04));
+  border-left: 3px solid var(--accent-blue);
+}
+
+.chrono-time {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.chrono-type {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chrono-icon {
+  font-size: 18px;
+}
+
+.chrono-name {
+  font-size: 13px;
+  color: var(--accent-blue);
+  font-weight: 600;
+}
+
+.chrono-row.chrono-active .chrono-name {
+  background: var(--gradient-main);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.chrono-insight {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.chrono-dash {
+  color: var(--text-dim);
+}
+
+.chrono-meta {
+  font-size: 13px;
+  color: var(--text-dim);
+  padding: 4px 2px;
+}
+
+.chrono-meta strong {
+  color: var(--text-muted);
+}
+
+/* ── Responsive chrono ───────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .chrono-header {
+    display: none;
+  }
+
+  .chrono-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+    padding: 14px 16px;
+  }
+
+  .tab-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+}
