@@ -336,3 +336,69 @@ curl -s "http://localhost:8081/api/v1/media/year?user_id=665767&course_id=755"
 - Все endpoint’ы read-only, побочных эффектов нет.
 - Для quarter-endpoint’ов backend сам делит пользовательскую траекторию курса на 4 части.
 - Метрики считаются по данным из PostgreSQL, уже загруженным в `xakaton`.
+
+### 6. Космический хронотип (Storytelling)
+
+Эти endpoint’ы определяют, в какое локальное время ученик чаще всего проявляет активность, и возвращают готовый narrative-блок для годового отчёта.
+
+Источник данных:
+- `wk_users_courses_actions.created_at` — время действий пользователя
+- `students_of_interest.timezone` — timezone ученика для перевода из UTC в локальное время
+
+Что считается активностью:
+- любые записи из `wk_users_courses_actions` внутри выбранного курса пользователя
+- для quarter-версии курс режется на 4 равные временные части по интервалу от `user_courses.created_at` до `user_courses.access_finished_at`
+
+#### Космический хронотип по четверти
+
+`GET /api/v1/chronotype/quarter?quarter=<1..4>&user_id=<user_id>&course_id=<course_id>`
+
+Поля:
+- `timezone` — локальная timezone ученика
+- `peak_local_hour` — локальный час с максимальным количеством действий
+- `peak_time` — текстовый диапазон пикового времени
+- `type` — тип хронотипа
+- `report_name` — название блока для отчёта
+- `insight` — готовый narrative-текст
+- `peak_actions_count` — сколько действий пришлось на пиковый час
+- `total_actions_count` — сколько действий учтено в четверти
+
+```json
+{
+  "course_id": 755,
+  "user_id": 665767,
+  "quarter": 1,
+  "timezone": "Asia/Chita",
+  "peak_local_hour": 21,
+  "peak_time": "18:00 - 22:00",
+  "type": "Вечерний",
+  "report_name": "Вечерняя звезда",
+  "insight": "Твои двигатели работают на полную в конце дня. Спокойная вечерняя атмосфера помогает тебе лучше концентрироваться.",
+  "peak_actions_count": 15,
+  "total_actions_count": 71
+}
+```
+
+#### Космический хронотип по году
+
+`GET /api/v1/chronotype/year?user_id=<user_id>&course_id=<course_id>`
+
+```json
+{
+  "course_id": 755,
+  "user_id": 665767,
+  "timezone": "Asia/Chita",
+  "peak_local_hour": 22,
+  "peak_time": "18:00 - 22:00",
+  "type": "Вечерний",
+  "report_name": "Вечерняя звезда",
+  "insight": "Твои двигатели работают на полную в конце дня. Спокойная вечерняя атмосфера помогает тебе лучше концентрироваться.",
+  "peak_actions_count": 25,
+  "total_actions_count": 138
+}
+```
+
+Как это можно использовать на frontend:
+- как storytelling-карточку в годовом отчёте
+- как бейдж или subtitle в профиле ученика
+- как часть narrative-блока рядом с графиками прогресса

@@ -14,6 +14,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE Drogon::Drogon)
 message(STATUS "use c++20")
 
 aux_source_directory(controllers CTL_SRC)
+aux_source_directory(controllers/Chronotype CTL_CHRONOTYPE_SRC)
 aux_source_directory(controllers/Conspects CTL_CONSPECTS_SRC)
 aux_source_directory(controllers/Media CTL_MEDIA_SRC)
 aux_source_directory(controllers/Points CTL_POINTS_SRC)
@@ -31,6 +32,7 @@ target_include_directories(${PROJECT_NAME}
 target_sources(${PROJECT_NAME}
                PRIVATE
                ${CTL_SRC}
+               ${CTL_CHRONOTYPE_SRC}
                ${CTL_CONSPECTS_SRC}
                ${CTL_MEDIA_SRC}
                ${CTL_POINTS_SRC}
