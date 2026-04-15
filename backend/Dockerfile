@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /tmp
-RUN git clone --depth 1 --branch v1.9.12 https://github.com/drogonframework/drogon.git
+RUN git clone --depth 1 --recurse-submodules --shallow-submodules --branch v1.9.12 https://github.com/drogonframework/drogon.git
 WORKDIR /tmp/drogon
 RUN cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_ORM=ON \
     && cmake --build build \

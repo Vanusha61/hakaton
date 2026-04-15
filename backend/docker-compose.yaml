@@ -17,7 +17,9 @@ services:
       retries: 10
 
   postgres:
-    image: postgres:18
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
     container_name: yearreporter-postgres
     restart: unless-stopped
     environment:
@@ -28,9 +30,9 @@ services:
       - "5555:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
-      - ./dump-xakaton-202603310120.sql:/backups/dump-xakaton-202603310120.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d xakaton"]
+      start_period: 120s
       interval: 5s
       timeout: 5s
       retries: 20
