@@ -20,6 +20,7 @@ aux_source_directory(controllers/Chronotype CTL_CHRONOTYPE_SRC)
 aux_source_directory(controllers/Conspects CTL_CONSPECTS_SRC)
 aux_source_directory(controllers/FirstVideoStarter CTL_FIRST_VIDEO_STARTER_SRC)
 aux_source_directory(controllers/Media CTL_MEDIA_SRC)
+aux_source_directory(controllers/PartialCreditShare CTL_PARTIAL_CREDIT_SHARE_SRC)
 aux_source_directory(controllers/Perseverance CTL_PERSEVERANCE_SRC)
 aux_source_directory(controllers/Points CTL_POINTS_SRC)
 aux_source_directory(controllers/Progress CTL_PROGRESS_SRC)
@@ -48,6 +49,7 @@ target_sources(${PROJECT_NAME}
                ${CTL_CONSPECTS_SRC}
                ${CTL_FIRST_VIDEO_STARTER_SRC}
                ${CTL_MEDIA_SRC}
+               ${CTL_PARTIAL_CREDIT_SHARE_SRC}
                ${CTL_PERSEVERANCE_SRC}
                ${CTL_POINTS_SRC}
                ${CTL_PROGRESS_SRC}
