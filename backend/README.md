@@ -1209,3 +1209,55 @@ AI-интерпретация:
 - количество достижений как простой achievement-counter
 - уровни как bar chart по шкале `1..5`
 - `special_count` как отдельный показатель редких достижений
+
+### 24. Самые редкие достижения пользователя
+
+Этот endpoint возвращает топ-3 самых редких достижений среди тех, которые есть у пользователя.
+
+Логика:
+- берём все достижения текущего пользователя
+- для каждого достижения считаем, у скольких учеников этого же курса оно тоже есть
+- считаем процент обладателей внутри курса
+- сортируем по возрастанию процента и отдаём топ-3
+
+#### Самые редкие достижения за год
+
+`GET /api/v1/award_badges_rarest/year?user_id=<user_id>&course_id=<course_id>`
+
+```json
+{
+  "course_id": 755,
+  "user_id": 665767,
+  "rarest_award_badges": [
+    {
+      "badge_id": 1,
+      "name": "AwardBadges::OlympiadParticipant",
+      "title": "Олимпиадник",
+      "level": 1,
+      "special": true,
+      "image_url": "https://u.foxford.ngcdn.ru/uploads/inner_file/file/31889/ach_olymp.svg",
+      "share_image_url": "https://u.foxford.ngcdn.ru/uploads/inner_file/file/31900/share_olymp.png",
+      "owners_count": 1,
+      "total_users_count": 527,
+      "owners_percentage": 0.2
+    },
+    {
+      "badge_id": 6,
+      "name": "AwardBadges::Solving",
+      "title": "Я решаю",
+      "level": 5,
+      "special": false,
+      "image_url": "https://u.foxford.ngcdn.ru/uploads/inner_file/file/31894/ach_solv_5.svg",
+      "share_image_url": "https://u.foxford.ngcdn.ru/uploads/inner_file/file/31899/share_solv_5.png",
+      "owners_count": 16,
+      "total_users_count": 527,
+      "owners_percentage": 3.0
+    }
+  ]
+}
+```
+
+Как это можно использовать на frontend:
+- показать 1-3 бейджа с подписью процента редкости
+- использовать `title` для tooltip при наведении
+- использовать `image_url` как основную картинку достижения

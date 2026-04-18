@@ -25,6 +25,25 @@ struct AwardBadgesLevelsResult
     int level5Count{0};
 };
 
+struct RareAwardBadgeItem
+{
+    int badgeId{0};
+    std::string name;
+    std::string title;
+    int level{0};
+    bool special{false};
+    std::string imageUrl;
+    std::string shareImageUrl;
+    int ownersCount{0};
+    int totalUsersCount{0};
+    double ownersPercentage{0.0};
+};
+
+struct RarestAwardBadgesResult
+{
+    std::vector<RareAwardBadgeItem> items;
+};
+
 class AwardBadgesService
 {
   public:
@@ -51,12 +70,21 @@ class AwardBadgesService
                                                              int courseId,
                                                              ApiError &error) const;
 
+    std::optional<RarestAwardBadgesResult> computeRarestYear(const drogon::orm::DbClientPtr &dbClient,
+                                                             int userId,
+                                                             int courseId,
+                                                             ApiError &error) const;
+
   private:
     struct BadgeRow
     {
         int badgeId{0};
+        std::string name;
+        std::string title;
         int level{0};
         bool special{false};
+        std::string imageUrl;
+        std::string shareImageUrl;
         std::string createdAt;
     };
 
