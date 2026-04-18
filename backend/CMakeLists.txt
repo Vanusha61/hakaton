@@ -26,6 +26,7 @@ aux_source_directory(controllers/RareLessons CTL_RARE_LESSONS_SRC)
 aux_source_directory(controllers/RarestVisitedLesson CTL_RAREST_VISITED_LESSON_SRC)
 aux_source_directory(controllers/SolvedLessons CTL_SOLVED_LESSONS_SRC)
 aux_source_directory(controllers/StudyRecommendations CTL_STUDY_RECOMMENDATIONS_SRC)
+aux_source_directory(controllers/TrainingInsights CTL_TRAINING_INSIGHTS_SRC)
 aux_source_directory(controllers/VideoAttention CTL_VIDEO_ATTENTION_SRC)
 aux_source_directory(controllers/Videos CTL_VIDEOS_SRC)
 aux_source_directory(services SERVICE_SRC)
@@ -52,6 +53,7 @@ target_sources(${PROJECT_NAME}
                ${CTL_RAREST_VISITED_LESSON_SRC}
                ${CTL_SOLVED_LESSONS_SRC}
                ${CTL_STUDY_RECOMMENDATIONS_SRC}
+               ${CTL_TRAINING_INSIGHTS_SRC}
                ${CTL_VIDEO_ATTENTION_SRC}
                ${CTL_VIDEOS_SRC}
                ${SERVICE_SRC}
