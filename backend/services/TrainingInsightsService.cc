@@ -40,14 +40,56 @@ std::optional<std::chrono::system_clock::time_point> parseIsoTimestamp(const std
 const std::vector<TrainingInsightsService::TrainingDefinition> &TrainingInsightsService::definitions()
 {
     static const std::vector<TrainingDefinition> kDefinitions = {
-        {.trainingId = 2357, .name = "Промежуточный контроль (тестирование)", .lessonId = 5591, .taskTemplatesCount = 5},
-        {.trainingId = 2356, .name = "Промежуточный контроль по физике в проекте Физтех-кузница", .lessonId = std::nullopt, .taskTemplatesCount = 5},
-        {.trainingId = 2355, .name = "Как устроена Физтех-кузница", .lessonId = std::nullopt, .taskTemplatesCount = 7},
-        {.trainingId = 2358, .name = "Промежуточный контроль по математике в проекте Физтех-кузница", .lessonId = std::nullopt, .taskTemplatesCount = 5},
-        {.trainingId = 2359, .name = "Промежуточный контроль (тестирование)", .lessonId = 5677, .taskTemplatesCount = 5},
-        {.trainingId = 2360, .name = "Промежуточный контроль по информатике в проекте Физтех-кузница", .lessonId = std::nullopt, .taskTemplatesCount = 5},
-        {.trainingId = 2362, .name = "Промежуточный контроль (тестирование)", .lessonId = 5760, .taskTemplatesCount = 5}};
+        {.trainingId = 2357,
+         .name = "Промежуточный контроль (тестирование)",
+         .lessonId = 5591,
+         .difficulty = 3,
+         .taskTemplatesCount = 5},
+        {.trainingId = 2356,
+         .name = "Промежуточный контроль по физике в проекте Физтех-кузница",
+         .lessonId = std::nullopt,
+         .difficulty = 3,
+         .taskTemplatesCount = 5},
+        {.trainingId = 2355,
+         .name = "Как устроена Физтех-кузница",
+         .lessonId = std::nullopt,
+         .difficulty = 1,
+         .taskTemplatesCount = 7},
+        {.trainingId = 2358,
+         .name = "Промежуточный контроль по математике в проекте Физтех-кузница",
+         .lessonId = std::nullopt,
+         .difficulty = 3,
+         .taskTemplatesCount = 5},
+        {.trainingId = 2359,
+         .name = "Промежуточный контроль (тестирование)",
+         .lessonId = 5677,
+         .difficulty = 3,
+         .taskTemplatesCount = 5},
+        {.trainingId = 2360,
+         .name = "Промежуточный контроль по информатике в проекте Физтех-кузница",
+         .lessonId = std::nullopt,
+         .difficulty = 3,
+         .taskTemplatesCount = 5},
+        {.trainingId = 2362,
+         .name = "Промежуточный контроль (тестирование)",
+         .lessonId = 5760,
+         .difficulty = 3,
+         .taskTemplatesCount = 5}};
     return kDefinitions;
+}
+
+std::string TrainingInsightsService::buildTrainingIdList(const std::vector<TrainingDefinition> &trainings)
+{
+    std::ostringstream out;
+    for (size_t index = 0; index < trainings.size(); ++index)
+    {
+        if (index > 0)
+        {
+            out << ", ";
+        }
+        out << trainings[index].trainingId;
+    }
+    return out.str();
 }
 
 std::optional<int> TrainingInsightsService::parseDurationSeconds(const std::string &startedAt,
@@ -129,32 +171,23 @@ TrainingInsightsService::loadContextForLessons(const drogon::orm::DbClientPtr &d
     try
     {
         const auto result = dbClient->execSqlSync(
-            "select training_id, "
+            "select user_id, "
+            "       training_id, "
             "       coalesce(solved_tasks_count, 0) as solved_tasks_count, "
             "       coalesce(submitted_answers_count, 0) as submitted_answers_count, "
             "       coalesce(attempts, 0) as attempts, "
             "       coalesce(started_at, '') as started_at, "
             "       coalesce(finished_at, '') as finished_at "
             "from public.user_trainings "
-            "where user_id = $1",
-            userId);
-
-        std::unordered_set<int> allowedTrainingIds;
-        for (const auto &training : context.trainings)
-        {
-            allowedTrainingIds.insert(training.trainingId);
-        }
+            "where training_id in (" +
+                buildTrainingIdList(context.trainings) +
+                ")");
 
         for (const auto &row : result)
         {
-            const auto trainingId = row["training_id"].as<int>();
-            if (!allowedTrainingIds.contains(trainingId))
-            {
-                continue;
-            }
-
             context.userTrainings.push_back(UserTrainingRecord{
-                .trainingId = trainingId,
+                .userId = row["user_id"].as<int>(),
+                .trainingId = row["training_id"].as<int>(),
                 .solvedTasksCount = row["solved_tasks_count"].as<int>(),
                 .submittedAnswersCount = row["submitted_answers_count"].as<int>(),
                 .attempts = row["attempts"].as<int>(),
@@ -162,7 +195,12 @@ TrainingInsightsService::loadContextForLessons(const drogon::orm::DbClientPtr &d
                 .finishedAt = row["finished_at"].as<std::string>()});
         }
 
-        if (context.userTrainings.empty())
+        const auto hasTargetUserRows = std::any_of(
+            context.userTrainings.begin(),
+            context.userTrainings.end(),
+            [userId](const UserTrainingRecord &record) { return record.userId == userId; });
+
+        if (!hasTargetUserRows)
         {
             error = {drogon::k404NotFound, "Для пользователя не найдены тренинги в выбранном периоде"};
             return std::nullopt;
@@ -225,6 +263,7 @@ TrainingInsightsService::loadYearContext(const drogon::orm::DbClientPtr &dbClien
 
 std::optional<TrainingDurationResult> TrainingInsightsService::shortestFromContext(
     const ScopedContext &context,
+    int userId,
     ApiError &error)
 {
     std::unordered_map<int, TrainingDefinition> trainingById;
@@ -236,6 +275,11 @@ std::optional<TrainingDurationResult> TrainingInsightsService::shortestFromConte
     std::optional<TrainingDurationResult> best;
     for (const auto &record : context.userTrainings)
     {
+        if (record.userId != userId)
+        {
+            continue;
+        }
+
         const auto duration = parseDurationSeconds(record.startedAt, record.finishedAt);
         if (!duration.has_value())
         {
@@ -269,6 +313,7 @@ std::optional<TrainingDurationResult> TrainingInsightsService::shortestFromConte
 
 std::optional<TrainingDurationResult> TrainingInsightsService::longestFromContext(
     const ScopedContext &context,
+    int userId,
     ApiError &error)
 {
     std::unordered_map<int, TrainingDefinition> trainingById;
@@ -280,6 +325,11 @@ std::optional<TrainingDurationResult> TrainingInsightsService::longestFromContex
     std::optional<TrainingDurationResult> best;
     for (const auto &record : context.userTrainings)
     {
+        if (record.userId != userId)
+        {
+            continue;
+        }
+
         const auto duration = parseDurationSeconds(record.startedAt, record.finishedAt);
         if (!duration.has_value())
         {
@@ -313,6 +363,7 @@ std::optional<TrainingDurationResult> TrainingInsightsService::longestFromContex
 
 std::optional<TrainingPerfectStreakResult> TrainingInsightsService::perfectStreakFromContext(
     const ScopedContext &context,
+    int userId,
     ApiError &error)
 {
     std::unordered_map<int, TrainingDefinition> trainingById;
@@ -324,6 +375,11 @@ std::optional<TrainingPerfectStreakResult> TrainingInsightsService::perfectStrea
     std::optional<TrainingPerfectStreakResult> best;
     for (const auto &record : context.userTrainings)
     {
+        if (record.userId != userId)
+        {
+            continue;
+        }
+
         const auto trainingIt = trainingById.find(record.trainingId);
         if (trainingIt == trainingById.end())
         {
@@ -362,6 +418,124 @@ std::optional<TrainingPerfectStreakResult> TrainingInsightsService::perfectStrea
     return best;
 }
 
+std::optional<TrainingStarterRankResult> TrainingInsightsService::starterRankFromContext(
+    const ScopedContext &context,
+    int userId,
+    ApiError &error)
+{
+    std::unordered_map<int, TrainingDefinition> trainingById;
+    for (const auto &training : context.trainings)
+    {
+        trainingById.emplace(training.trainingId, training);
+    }
+
+    std::unordered_map<int, std::vector<const UserTrainingRecord *>> recordsByTraining;
+    for (const auto &record : context.userTrainings)
+    {
+        if (!record.startedAt.empty())
+        {
+            recordsByTraining[record.trainingId].push_back(&record);
+        }
+    }
+
+    std::optional<TrainingStarterRankResult> best;
+    for (const auto &[trainingId, rawRecords] : recordsByTraining)
+    {
+        auto records = rawRecords;
+        std::sort(records.begin(),
+                  records.end(),
+                  [](const UserTrainingRecord *lhs, const UserTrainingRecord *rhs)
+                  {
+                      if (lhs->startedAt != rhs->startedAt)
+                      {
+                          return lhs->startedAt < rhs->startedAt;
+                      }
+                      return lhs->userId < rhs->userId;
+                  });
+
+        int rank = 0;
+        for (const auto *record : records)
+        {
+            ++rank;
+            if (record->userId != userId)
+            {
+                continue;
+            }
+
+            const auto trainingIt = trainingById.find(trainingId);
+            if (trainingIt == trainingById.end())
+            {
+                continue;
+            }
+
+            TrainingStarterRankResult candidate{
+                .trainingId = trainingId,
+                .trainingName = trainingIt->second.name,
+                .userRank = rank,
+                .isUserFirstStarter = rank == 1,
+                .isUserTop3Starter = rank <= 3,
+                .userStartedAt = record->startedAt,
+                .globalFirstStartedAt = records.front()->startedAt};
+
+            if (!best.has_value() || candidate.userRank < best->userRank)
+            {
+                best = candidate;
+            }
+            break;
+        }
+    }
+
+    if (!best.has_value())
+    {
+        error = {drogon::k404NotFound,
+                 "Для пользователя не найдено стартов тренингов в выбранном периоде"};
+        return std::nullopt;
+    }
+
+    return best;
+}
+
+TrainingDifficultyStatsResult TrainingInsightsService::difficultyStatsFromContext(const ScopedContext &context,
+                                                                                  int userId)
+{
+    std::unordered_map<int, TrainingDefinition> trainingById;
+    for (const auto &training : context.trainings)
+    {
+        trainingById.emplace(training.trainingId, training);
+    }
+
+    TrainingDifficultyStatsResult result;
+    for (const auto &record : context.userTrainings)
+    {
+        if (record.userId != userId)
+        {
+            continue;
+        }
+
+        const auto trainingIt = trainingById.find(record.trainingId);
+        if (trainingIt == trainingById.end())
+        {
+            continue;
+        }
+
+        ++result.totalCount;
+        if (trainingIt->second.difficulty <= 1)
+        {
+            ++result.easyCount;
+        }
+        else if (trainingIt->second.difficulty >= 3)
+        {
+            ++result.hardCount;
+        }
+        else
+        {
+            ++result.mediumCount;
+        }
+    }
+
+    return result;
+}
+
 std::optional<TrainingDurationResult> TrainingInsightsService::computeShortestQuarter(
     const drogon::orm::DbClientPtr &dbClient,
     int quarter,
@@ -374,7 +548,7 @@ std::optional<TrainingDurationResult> TrainingInsightsService::computeShortestQu
     {
         return std::nullopt;
     }
-    return shortestFromContext(*context, error);
+    return shortestFromContext(*context, userId, error);
 }
 
 std::optional<TrainingDurationResult> TrainingInsightsService::computeShortestYear(
@@ -388,8 +562,7 @@ std::optional<TrainingDurationResult> TrainingInsightsService::computeShortestYe
     {
         return std::nullopt;
     }
-
-    return shortestFromContext(*context, error);
+    return shortestFromContext(*context, userId, error);
 }
 
 std::optional<TrainingDurationResult> TrainingInsightsService::computeLongestQuarter(
@@ -404,8 +577,7 @@ std::optional<TrainingDurationResult> TrainingInsightsService::computeLongestQua
     {
         return std::nullopt;
     }
-
-    return longestFromContext(*context, error);
+    return longestFromContext(*context, userId, error);
 }
 
 std::optional<TrainingDurationResult> TrainingInsightsService::computeLongestYear(
@@ -419,8 +591,7 @@ std::optional<TrainingDurationResult> TrainingInsightsService::computeLongestYea
     {
         return std::nullopt;
     }
-
-    return longestFromContext(*context, error);
+    return longestFromContext(*context, userId, error);
 }
 
 std::optional<TrainingSolvedTasksResult> TrainingInsightsService::computeSolvedTasksQuarter(
@@ -437,9 +608,13 @@ std::optional<TrainingSolvedTasksResult> TrainingInsightsService::computeSolvedT
     }
 
     TrainingSolvedTasksResult result;
-    result.trainingsCount = static_cast<int>(context->userTrainings.size());
     for (const auto &record : context->userTrainings)
     {
+        if (record.userId != userId)
+        {
+            continue;
+        }
+        ++result.trainingsCount;
         result.solvedTasksCount += record.solvedTasksCount;
     }
     return result;
@@ -458,9 +633,13 @@ std::optional<TrainingSolvedTasksResult> TrainingInsightsService::computeSolvedT
     }
 
     TrainingSolvedTasksResult result;
-    result.trainingsCount = static_cast<int>(context->userTrainings.size());
     for (const auto &record : context->userTrainings)
     {
+        if (record.userId != userId)
+        {
+            continue;
+        }
+        ++result.trainingsCount;
         result.solvedTasksCount += record.solvedTasksCount;
     }
     return result;
@@ -478,8 +657,7 @@ std::optional<TrainingPerfectStreakResult> TrainingInsightsService::computePerfe
     {
         return std::nullopt;
     }
-
-    return perfectStreakFromContext(*context, error);
+    return perfectStreakFromContext(*context, userId, error);
 }
 
 std::optional<TrainingPerfectStreakResult> TrainingInsightsService::computePerfectStreakYear(
@@ -493,7 +671,64 @@ std::optional<TrainingPerfectStreakResult> TrainingInsightsService::computePerfe
     {
         return std::nullopt;
     }
+    return perfectStreakFromContext(*context, userId, error);
+}
 
-    return perfectStreakFromContext(*context, error);
+std::optional<TrainingStarterRankResult> TrainingInsightsService::computeStarterRankQuarter(
+    const drogon::orm::DbClientPtr &dbClient,
+    int quarter,
+    int userId,
+    int courseId,
+    ApiError &error) const
+{
+    const auto context = loadQuarterContext(dbClient, quarter, userId, courseId, error);
+    if (!context.has_value())
+    {
+        return std::nullopt;
+    }
+    return starterRankFromContext(*context, userId, error);
+}
+
+std::optional<TrainingStarterRankResult> TrainingInsightsService::computeStarterRankYear(
+    const drogon::orm::DbClientPtr &dbClient,
+    int userId,
+    int courseId,
+    ApiError &error) const
+{
+    const auto context = loadYearContext(dbClient, userId, courseId, error);
+    if (!context.has_value())
+    {
+        return std::nullopt;
+    }
+    return starterRankFromContext(*context, userId, error);
+}
+
+std::optional<TrainingDifficultyStatsResult> TrainingInsightsService::computeDifficultyStatsQuarter(
+    const drogon::orm::DbClientPtr &dbClient,
+    int quarter,
+    int userId,
+    int courseId,
+    ApiError &error) const
+{
+    const auto context = loadQuarterContext(dbClient, quarter, userId, courseId, error);
+    if (!context.has_value())
+    {
+        return std::nullopt;
+    }
+    return difficultyStatsFromContext(*context, userId);
+}
+
+std::optional<TrainingDifficultyStatsResult> TrainingInsightsService::computeDifficultyStatsYear(
+    const drogon::orm::DbClientPtr &dbClient,
+    int userId,
+    int courseId,
+    ApiError &error) const
+{
+    const auto context = loadYearContext(dbClient, userId, courseId, error);
+    if (!context.has_value())
+    {
+        return std::nullopt;
+    }
+    return difficultyStatsFromContext(*context, userId);
 }
 }  // namespace yearreporter::services

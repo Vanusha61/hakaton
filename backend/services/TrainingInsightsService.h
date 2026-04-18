@@ -34,6 +34,25 @@ struct TrainingPerfectStreakResult
     std::string insight;
 };
 
+struct TrainingStarterRankResult
+{
+    int trainingId{0};
+    std::string trainingName;
+    int userRank{0};
+    bool isUserFirstStarter{false};
+    bool isUserTop3Starter{false};
+    std::string userStartedAt;
+    std::string globalFirstStartedAt;
+};
+
+struct TrainingDifficultyStatsResult
+{
+    int easyCount{0};
+    int mediumCount{0};
+    int hardCount{0};
+    int totalCount{0};
+};
+
 class TrainingInsightsService
 {
   public:
@@ -89,17 +108,45 @@ class TrainingInsightsService
         int courseId,
         ApiError &error) const;
 
+    std::optional<TrainingStarterRankResult> computeStarterRankQuarter(
+        const drogon::orm::DbClientPtr &dbClient,
+        int quarter,
+        int userId,
+        int courseId,
+        ApiError &error) const;
+
+    std::optional<TrainingStarterRankResult> computeStarterRankYear(
+        const drogon::orm::DbClientPtr &dbClient,
+        int userId,
+        int courseId,
+        ApiError &error) const;
+
+    std::optional<TrainingDifficultyStatsResult> computeDifficultyStatsQuarter(
+        const drogon::orm::DbClientPtr &dbClient,
+        int quarter,
+        int userId,
+        int courseId,
+        ApiError &error) const;
+
+    std::optional<TrainingDifficultyStatsResult> computeDifficultyStatsYear(
+        const drogon::orm::DbClientPtr &dbClient,
+        int userId,
+        int courseId,
+        ApiError &error) const;
+
   private:
     struct TrainingDefinition
     {
         int trainingId{0};
         std::string name;
         std::optional<int> lessonId;
+        int difficulty{0};
         int taskTemplatesCount{0};
     };
 
     struct UserTrainingRecord
     {
+        int userId{0};
         int trainingId{0};
         int solvedTasksCount{0};
         int submittedAnswersCount{0};
@@ -132,16 +179,26 @@ class TrainingInsightsService
                                                        ApiError &error) const;
 
     static std::optional<TrainingDurationResult> shortestFromContext(const ScopedContext &context,
+                                                                     int userId,
                                                                      ApiError &error);
     static std::optional<TrainingDurationResult> longestFromContext(const ScopedContext &context,
+                                                                    int userId,
                                                                     ApiError &error);
     static std::optional<TrainingPerfectStreakResult> perfectStreakFromContext(
         const ScopedContext &context,
+        int userId,
         ApiError &error);
+    static std::optional<TrainingStarterRankResult> starterRankFromContext(
+        const ScopedContext &context,
+        int userId,
+        ApiError &error);
+    static TrainingDifficultyStatsResult difficultyStatsFromContext(const ScopedContext &context,
+                                                                    int userId);
 
     static const std::vector<TrainingDefinition> &definitions();
     static std::optional<int> parseDurationSeconds(const std::string &startedAt,
                                                    const std::string &finishedAt);
     static std::string formatDuration(int totalSeconds);
+    static std::string buildTrainingIdList(const std::vector<TrainingDefinition> &trainings);
 };
 }  // namespace yearreporter::services

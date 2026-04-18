@@ -987,3 +987,98 @@ AI-интерпретация:
 - короткий и длинный тренинг как тайм-инсайты
 - количество задач как achievement-счётчик
 - максимум задач без ошибок как мотивационную карточку про точность
+
+### 19. Первый или топ-3 по старту тренинга
+
+Эти endpoint’ы находят тренировку выбранного периода, где пользователь стартовал раньше всего относительно других учеников.
+
+Что отдаём:
+- `user_rank` — место пользователя по времени старта внутри тренинга
+- `is_user_first_starter` — был ли пользователь первым
+- `is_user_top3_starter` — попал ли пользователь в топ-3 по старту
+- `training_name` — название тренинга, где у пользователя лучший ранг
+
+#### Лучший ранг старта тренинга по четверти
+
+`GET /api/v1/training_starter_rank/quarter?quarter=<1..4>&user_id=<user_id>&course_id=<course_id>`
+
+```json
+{
+  "course_id": 755,
+  "user_id": 672661,
+  "quarter": 2,
+  "training_id": 2359,
+  "training_name": "Промежуточный контроль (тестирование)",
+  "user_rank": 1,
+  "is_user_first_starter": true,
+  "is_user_top3_starter": true,
+  "user_started_at": "2026-01-31T09:36:54.78381+03:00",
+  "global_first_started_at": "2026-01-31T09:36:54.78381+03:00"
+}
+```
+
+#### Лучший ранг старта тренинга по году
+
+`GET /api/v1/training_starter_rank/year?user_id=<user_id>&course_id=<course_id>`
+
+```json
+{
+  "course_id": 755,
+  "user_id": 672661,
+  "training_id": 2359,
+  "training_name": "Промежуточный контроль (тестирование)",
+  "user_rank": 1,
+  "is_user_first_starter": true,
+  "is_user_top3_starter": true,
+  "user_started_at": "2026-01-31T09:36:54.78381+03:00",
+  "global_first_started_at": "2026-01-31T09:36:54.78381+03:00"
+}
+```
+
+### 20. Сколько тренингов решено на разных уровнях сложности
+
+Эти endpoint’ы показывают распределение тренингов пользователя по уровням сложности.
+
+В MVP:
+- `easy_count` — тренинги сложности `1`
+- `medium_count` — тренинги сложности `2`
+- `hard_count` — тренинги сложности `3+`
+
+#### Распределение по сложности за четверть
+
+`GET /api/v1/training_difficulty_stats/quarter?quarter=<1..4>&user_id=<user_id>&course_id=<course_id>`
+
+```json
+{
+  "course_id": 755,
+  "user_id": 672661,
+  "quarter": 2,
+  "difficulty_stats": {
+    "easy_count": 0,
+    "medium_count": 0,
+    "hard_count": 2,
+    "total_count": 2
+  }
+}
+```
+
+#### Распределение по сложности за год
+
+`GET /api/v1/training_difficulty_stats/year?user_id=<user_id>&course_id=<course_id>`
+
+```json
+{
+  "course_id": 755,
+  "user_id": 672661,
+  "difficulty_stats": {
+    "easy_count": 0,
+    "medium_count": 0,
+    "hard_count": 3,
+    "total_count": 3
+  }
+}
+```
+
+Как это можно использовать на frontend:
+- ранг старта как карточку про скорость включения в работу
+- распределение по сложности как мини-диаграмму или achievement-профиль
