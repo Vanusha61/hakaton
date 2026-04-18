@@ -15,6 +15,7 @@ message(STATUS "use c++20")
 
 aux_source_directory(controllers CTL_SRC)
 aux_source_directory(controllers/Attendance CTL_ATTENDANCE_SRC)
+aux_source_directory(controllers/AwardBadges CTL_AWARD_BADGES_SRC)
 aux_source_directory(controllers/Chronotype CTL_CHRONOTYPE_SRC)
 aux_source_directory(controllers/Conspects CTL_CONSPECTS_SRC)
 aux_source_directory(controllers/FirstVideoStarter CTL_FIRST_VIDEO_STARTER_SRC)
@@ -42,6 +43,7 @@ target_sources(${PROJECT_NAME}
                PRIVATE
                ${CTL_SRC}
                ${CTL_ATTENDANCE_SRC}
+               ${CTL_AWARD_BADGES_SRC}
                ${CTL_CHRONOTYPE_SRC}
                ${CTL_CONSPECTS_SRC}
                ${CTL_FIRST_VIDEO_STARTER_SRC}

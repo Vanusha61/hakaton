@@ -1121,3 +1121,91 @@ AI-интерпретация:
 Как это можно использовать на frontend:
 - как круговую диаграмму по трём типам тренингов
 - как отдельную элитную карточку про участие в олимпиадных активностях
+
+### 22. Количество достижений
+
+Эти endpoint’ы возвращают, сколько достижений пользователь получил за выбранный период.
+
+Как считается:
+- берём записи из `user_award_badges`
+- для quarter-версии фильтруем по кварталу даты `created_at`
+
+#### Количество достижений по четверти
+
+`GET /api/v1/award_badges_count/quarter?quarter=<1..4>&user_id=<user_id>&course_id=<course_id>`
+
+```json
+{
+  "course_id": 755,
+  "user_id": 665767,
+  "quarter": 1,
+  "award_badges_count": 2
+}
+```
+
+#### Количество достижений по году
+
+`GET /api/v1/award_badges_count/year?user_id=<user_id>&course_id=<course_id>`
+
+```json
+{
+  "course_id": 755,
+  "user_id": 665767,
+  "award_badges_count": 3
+}
+```
+
+### 23. Распределение достижений по уровням и special-категории
+
+Эти endpoint’ы показывают:
+- сколько наград получено в категории `special`
+- сколько наград получено на уровнях `1..5`
+
+Важно:
+- quarter-версия считается по кварталу даты получения награды `created_at`
+
+#### Распределение достижений по уровням за четверть
+
+`GET /api/v1/award_badges_levels/quarter?quarter=<1..4>&user_id=<user_id>&course_id=<course_id>`
+
+```json
+{
+  "course_id": 755,
+  "user_id": 665767,
+  "quarter": 1,
+  "award_badges_levels": {
+    "special_count": 0,
+    "total_count": 2,
+    "level_1_count": 1,
+    "level_2_count": 1,
+    "level_3_count": 0,
+    "level_4_count": 0,
+    "level_5_count": 0
+  }
+}
+```
+
+#### Распределение достижений по уровням за год
+
+`GET /api/v1/award_badges_levels/year?user_id=<user_id>&course_id=<course_id>`
+
+```json
+{
+  "course_id": 755,
+  "user_id": 665767,
+  "award_badges_levels": {
+    "special_count": 0,
+    "total_count": 3,
+    "level_1_count": 1,
+    "level_2_count": 1,
+    "level_3_count": 1,
+    "level_4_count": 0,
+    "level_5_count": 0
+  }
+}
+```
+
+Как это можно использовать на frontend:
+- количество достижений как простой achievement-counter
+- уровни как bar chart по шкале `1..5`
+- `special_count` как отдельный показатель редких достижений
