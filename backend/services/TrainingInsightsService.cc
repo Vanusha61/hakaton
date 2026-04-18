@@ -92,6 +92,16 @@ std::string TrainingInsightsService::buildTrainingIdList(const std::vector<Train
     return out.str();
 }
 
+int TrainingInsightsService::roundPercent(int value, int total)
+{
+    if (total <= 0)
+    {
+        return 0;
+    }
+    return static_cast<int>(std::lround(static_cast<double>(value) * 100.0 /
+                                        static_cast<double>(total)));
+}
+
 std::optional<int> TrainingInsightsService::parseDurationSeconds(const std::string &startedAt,
                                                                  const std::string &finishedAt)
 {
@@ -536,6 +546,58 @@ TrainingDifficultyStatsResult TrainingInsightsService::difficultyStatsFromContex
     return result;
 }
 
+TrainingTypeProfileResult TrainingInsightsService::typeProfileFromUserTrainings(
+    const std::vector<UserTrainingRecord> &records,
+    int userId)
+{
+    TrainingTypeProfileResult result;
+
+    for (const auto &record : records)
+    {
+        if (record.userId != userId)
+        {
+            continue;
+        }
+
+        ++result.totalCount;
+
+        if (record.trainingId == 2355)
+        {
+            ++result.regularTrainingCount;
+            continue;
+        }
+
+        if (record.trainingId == 2357 || record.trainingId == 2359 || record.trainingId == 2362)
+        {
+            ++result.lessonTrainingCount;
+            continue;
+        }
+
+        ++result.olympiadTrainingCount;
+    }
+
+    result.lessonTrainingPercentage = roundPercent(result.lessonTrainingCount, result.totalCount);
+    result.regularTrainingPercentage = roundPercent(result.regularTrainingCount, result.totalCount);
+    result.olympiadTrainingPercentage = roundPercent(result.olympiadTrainingCount, result.totalCount);
+    result.hasOlympiadTraining = result.olympiadTrainingCount > 0;
+    result.reportName = "Укротитель олимпиад";
+
+    if (result.hasOlympiadTraining)
+    {
+        result.insight = "Ты вышел на орбиту высших достижений, приняв участие в олимпиадных "
+                         "тренингах. Это испытание для лучших из лучших, и твоя ракета достойно "
+                         "представила нашу эскадрилью.";
+    }
+    else
+    {
+        result.insight = "Сейчас твой профиль опирается на курсовые и регулярные тренинги. До "
+                         "олимпиадной орбиты пока не добрался, но фундамент для следующего рывка "
+                         "уже собран.";
+    }
+
+    return result;
+}
+
 std::optional<TrainingDurationResult> TrainingInsightsService::computeShortestQuarter(
     const drogon::orm::DbClientPtr &dbClient,
     int quarter,
@@ -730,5 +792,52 @@ std::optional<TrainingDifficultyStatsResult> TrainingInsightsService::computeDif
         return std::nullopt;
     }
     return difficultyStatsFromContext(*context, userId);
+}
+
+std::optional<TrainingTypeProfileResult> TrainingInsightsService::computeTypeProfileYear(
+    const drogon::orm::DbClientPtr &dbClient,
+    int userId,
+    int courseId,
+    ApiError &error) const
+{
+    CourseMetricsService courseService;
+    const auto course = courseService.findUserCourse(dbClient, userId, courseId, error);
+    if (!course.has_value())
+    {
+        return std::nullopt;
+    }
+
+    try
+    {
+        const auto result = dbClient->execSqlSync(
+            "select user_id, training_id, coalesce(started_at, '') as started_at "
+            "from public.user_trainings "
+            "where user_id = $1",
+            userId);
+
+        if (result.empty())
+        {
+            error = {drogon::k404NotFound, "Для пользователя не найдены тренинги"};
+            return std::nullopt;
+        }
+
+        std::vector<UserTrainingRecord> records;
+        records.reserve(result.size());
+        for (const auto &row : result)
+        {
+            records.push_back(UserTrainingRecord{
+                .userId = row["user_id"].as<int>(),
+                .trainingId = row["training_id"].as<int>(),
+                .startedAt = row["started_at"].as<std::string>()});
+        }
+
+        return typeProfileFromUserTrainings(records, userId);
+    }
+    catch (const std::exception &e)
+    {
+        error = {drogon::k500InternalServerError,
+                 "Ошибка расчёта профиля типов тренингов: " + std::string(e.what())};
+        return std::nullopt;
+    }
 }
 }  // namespace yearreporter::services

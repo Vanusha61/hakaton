@@ -53,6 +53,20 @@ struct TrainingDifficultyStatsResult
     int totalCount{0};
 };
 
+struct TrainingTypeProfileResult
+{
+    int lessonTrainingCount{0};
+    int lessonTrainingPercentage{0};
+    int regularTrainingCount{0};
+    int regularTrainingPercentage{0};
+    int olympiadTrainingCount{0};
+    int olympiadTrainingPercentage{0};
+    int totalCount{0};
+    bool hasOlympiadTraining{false};
+    std::string reportName;
+    std::string insight;
+};
+
 class TrainingInsightsService
 {
   public:
@@ -134,6 +148,12 @@ class TrainingInsightsService
         int courseId,
         ApiError &error) const;
 
+    std::optional<TrainingTypeProfileResult> computeTypeProfileYear(
+        const drogon::orm::DbClientPtr &dbClient,
+        int userId,
+        int courseId,
+        ApiError &error) const;
+
   private:
     struct TrainingDefinition
     {
@@ -194,11 +214,15 @@ class TrainingInsightsService
         ApiError &error);
     static TrainingDifficultyStatsResult difficultyStatsFromContext(const ScopedContext &context,
                                                                     int userId);
+    static TrainingTypeProfileResult typeProfileFromUserTrainings(
+        const std::vector<UserTrainingRecord> &records,
+        int userId);
 
     static const std::vector<TrainingDefinition> &definitions();
     static std::optional<int> parseDurationSeconds(const std::string &startedAt,
                                                    const std::string &finishedAt);
     static std::string formatDuration(int totalSeconds);
     static std::string buildTrainingIdList(const std::vector<TrainingDefinition> &trainings);
+    static int roundPercent(int value, int total);
 };
 }  // namespace yearreporter::services
