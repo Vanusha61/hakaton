@@ -1,0 +1,7 @@
+FROM postgres:18
+
+COPY dump-xakaton-202603310120.sql /backups/dump-xakaton-202603310120.sql
+COPY postgres-init/01-restore-dump.sh /docker-entrypoint-initdb.d/01-restore-dump.sh
+
+RUN chmod 644 /backups/dump-xakaton-202603310120.sql \
+    && chmod 755 /docker-entrypoint-initdb.d/01-restore-dump.sh

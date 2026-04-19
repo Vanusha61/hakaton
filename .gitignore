@@ -2,3 +2,4 @@ backend/build
 backend/cmake-build-debug
 backend/CMakeFiles
 .idea
+backend/.env
