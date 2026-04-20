@@ -16,6 +16,7 @@ message(STATUS "use c++20")
 aux_source_directory(controllers CTL_SRC)
 aux_source_directory(controllers/Attendance CTL_ATTENDANCE_SRC)
 aux_source_directory(controllers/AwardBadges CTL_AWARD_BADGES_SRC)
+aux_source_directory(controllers/ClassTextDepthRank CTL_CLASS_TEXT_DEPTH_RANK_SRC)
 aux_source_directory(controllers/Chronotype CTL_CHRONOTYPE_SRC)
 aux_source_directory(controllers/Conspects CTL_CONSPECTS_SRC)
 aux_source_directory(controllers/FirstVideoStarter CTL_FIRST_VIDEO_STARTER_SRC)
@@ -26,6 +27,7 @@ aux_source_directory(controllers/Points CTL_POINTS_SRC)
 aux_source_directory(controllers/Progress CTL_PROGRESS_SRC)
 aux_source_directory(controllers/RareLessons CTL_RARE_LESSONS_SRC)
 aux_source_directory(controllers/RarestVisitedLesson CTL_RAREST_VISITED_LESSON_SRC)
+aux_source_directory(controllers/RegionPointsRank CTL_REGION_POINTS_RANK_SRC)
 aux_source_directory(controllers/SchoolVideoRank CTL_SCHOOL_VIDEO_RANK_SRC)
 aux_source_directory(controllers/SolvedLessons CTL_SOLVED_LESSONS_SRC)
 aux_source_directory(controllers/StudyRecommendations CTL_STUDY_RECOMMENDATIONS_SRC)
@@ -46,6 +48,7 @@ target_sources(${PROJECT_NAME}
                ${CTL_SRC}
                ${CTL_ATTENDANCE_SRC}
                ${CTL_AWARD_BADGES_SRC}
+               ${CTL_CLASS_TEXT_DEPTH_RANK_SRC}
                ${CTL_CHRONOTYPE_SRC}
                ${CTL_CONSPECTS_SRC}
                ${CTL_FIRST_VIDEO_STARTER_SRC}
@@ -56,6 +59,7 @@ target_sources(${PROJECT_NAME}
                ${CTL_PROGRESS_SRC}
                ${CTL_RARE_LESSONS_SRC}
                ${CTL_RAREST_VISITED_LESSON_SRC}
+               ${CTL_REGION_POINTS_RANK_SRC}
                ${CTL_SCHOOL_VIDEO_RANK_SRC}
                ${CTL_SOLVED_LESSONS_SRC}
                ${CTL_STUDY_RECOMMENDATIONS_SRC}
