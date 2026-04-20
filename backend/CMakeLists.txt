@@ -26,6 +26,7 @@ aux_source_directory(controllers/Points CTL_POINTS_SRC)
 aux_source_directory(controllers/Progress CTL_PROGRESS_SRC)
 aux_source_directory(controllers/RareLessons CTL_RARE_LESSONS_SRC)
 aux_source_directory(controllers/RarestVisitedLesson CTL_RAREST_VISITED_LESSON_SRC)
+aux_source_directory(controllers/SchoolVideoRank CTL_SCHOOL_VIDEO_RANK_SRC)
 aux_source_directory(controllers/SolvedLessons CTL_SOLVED_LESSONS_SRC)
 aux_source_directory(controllers/StudyRecommendations CTL_STUDY_RECOMMENDATIONS_SRC)
 aux_source_directory(controllers/TrainingInsights CTL_TRAINING_INSIGHTS_SRC)
@@ -55,6 +56,7 @@ target_sources(${PROJECT_NAME}
                ${CTL_PROGRESS_SRC}
                ${CTL_RARE_LESSONS_SRC}
                ${CTL_RAREST_VISITED_LESSON_SRC}
+               ${CTL_SCHOOL_VIDEO_RANK_SRC}
                ${CTL_SOLVED_LESSONS_SRC}
                ${CTL_STUDY_RECOMMENDATIONS_SRC}
                ${CTL_TRAINING_INSIGHTS_SRC}
