@@ -1,24 +1,20 @@
-# Backend Docker Quick Start
+1. Установить Node.js
 
-1. Перейдите в папку бэкенда:
-```bash
-cd /Users/mikhaiil/CLionProjects/hakaton/backend
-```
+Скачать и установить:
+https://nodejs.org
 
-2. Создайте `.env` из примера и при необходимости отредактируйте настройки PostgreSQL и порты:
-```bash
-cp env.example .env
-```
+Проверка:
 
-3. Соберите и поднимите сервисы:
-```bash
-docker compose up -d --build
-```
-
-4. Бэкенд будет доступен на порту из `BACKEND_PORT`, PostgreSQL на порту из `POSTGRES_PORT`.
-
-Важно: dump `dump-xakaton-202603310120.sql` автоматически восстанавливается только при первом запуске на пустом Docker volume. Если нужно заново развернуть БД из dump, выполните:
-```bash
-docker compose down -v
-docker compose up -d --build
-```
+node -v
+npm -v
+2. Склонировать проект
+git clone https://github.com/Vanusha61/hakaton.git
+cd hakaton
+3. Перейти во frontend
+cd frontend
+4. Установить зависимости
+npm install
+5. Запустить проект
+npm run dev
+6. Открыть в браузере
+http://localhost:5174/
